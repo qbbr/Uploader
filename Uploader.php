@@ -43,14 +43,15 @@ class Q_Uploader
     {
         $this->prepareDir($dir);
 
+        $originalName = $this->_file->getName();
+        if (null === $name) $name = $originalName;
         $filePath = $dir . DIRECTORY_SEPARATOR . $name;
 
         if (file_exists($filePath)) {
             throw new Q_Uploader_Exception("File ({$filePath}) already exist");
         }
-
+        
         $size = $this->_file->getSize();
-        $originalName = $this->_file->getName();
 
         if ($size == 0) {
             throw new Q_Uploader_Exception("File ({$originalName}) is empty");
@@ -61,7 +62,7 @@ class Q_Uploader
         }
 
         $pathinfo = pathinfo($originalName);
-        $originalFileName = $pathinfo['filename'];
+        //$originalFileName = $pathinfo['filename'];
         $ext = strtolower($pathinfo['extension']);
 
         if (!empty($this->_allowedExtensions) && !in_array($ext, $this->_allowedExtensions)) {
