@@ -16,6 +16,9 @@ class Q_Uploader
     protected $_allowedExtensions;
     protected $_sizeLimit = 10485760; // 10M
 
+    /**
+     * @throws Q_Uploader_Exception
+     */
     public function __construct($name)
     {
         if (isset($_GET[$name])) {
@@ -39,6 +42,14 @@ class Q_Uploader
         $this->checkServerSettings();
     }
 
+    /**
+     * Save file to dir
+     *
+     * @throws Q_Uploader_Exception
+     * @param string $dir
+     * @param string $name
+     * @return boolean
+     */
     public function saveTo($dir, $name = null)
     {
         $this->prepareDir($dir);
@@ -50,10 +61,10 @@ class Q_Uploader
         if (file_exists($filePath)) {
             throw new Q_Uploader_Exception("File ({$filePath}) already exist");
         }
-        
+
         $size = $this->_file->getSize();
 
-        if ($size == 0) {
+        if (0 === $size) {
             throw new Q_Uploader_Exception("File ({$originalName}) is empty");
         }
 
@@ -73,6 +84,9 @@ class Q_Uploader
         return $this->_file->save($filePath);
     }
 
+    /**
+     * @throws Q_Uploader_Exception
+     */
     protected function prepareDir($dir)
     {
         if (!is_dir($dir)) {
@@ -88,6 +102,9 @@ class Q_Uploader
         }
     }
 
+    /**
+     * @throws Q_Uploader_Exception
+     */
     protected function checkServerSettings()
     {
         if (
