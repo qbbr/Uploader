@@ -7,7 +7,7 @@
  * @license http://opensource.org/licenses/MIT MIT License
  * @copyright Copyright (c) 2011, qbbr
  */
-class Q_Uploader_Method_Abstract
+abstract class Q_Uploader_Method_Abstract
 {
     protected $_name;
 

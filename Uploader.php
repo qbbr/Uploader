@@ -14,10 +14,12 @@ class Q_Uploader
      */
     protected $_file;
     protected $_allowedExtensions;
-    protected $_sizeLimit = 10485760; // 10M
+    protected $_sizeLimit = 1048576; // 1M
+    protected $_originalFileName = false;
 
     /**
      * @throws Q_Uploader_Exception
+     * @param string $name
      */
     public function __construct($name)
     {
@@ -30,16 +32,45 @@ class Q_Uploader
         }
     }
 
+    /**
+     * Set the allowable file extensions
+     *
+     * @param array $extensions
+     * @return Q_Uploader
+     */
     public function setAllowedExtensions(array $extensions)
     {
         $this->_allowedExtensions = $extensions;
+
+        return $this;
     }
 
+    /**
+     * Set file size limit
+     *
+     * @param integer $size
+     * @return Q_Uploader
+     */
     public function setSizeLimit($size)
     {
         $this->_sizeLimit = $size;
 
         $this->checkServerSettings();
+
+        return $this;
+    }
+
+    /**
+     * Sve original filename, not rename
+     *
+     * @param boolean $originalFileName
+     * @return Q_Uploader
+     */
+    public function originalFileName($originalFileName = false)
+    {
+        $this->_originalFileName = $originalFileName;
+
+        return $this;
     }
 
     /**
@@ -47,16 +78,20 @@ class Q_Uploader
      *
      * @throws Q_Uploader_Exception
      * @param string $dir
-     * @param string $name
      * @return boolean
      */
-    public function saveTo($dir, $name = null)
+    public function saveTo($dir)
     {
         $this->prepareDir($dir);
 
         $originalName = $this->_file->getName();
-        if (null === $name) $name = $originalName;
-        $filePath = $dir . DIRECTORY_SEPARATOR . $name;
+        $pathinfo = pathinfo($originalName);
+
+        $extension = strtolower($pathinfo['extension']);
+
+        $filename = (true === $this->_originalFileName) ? $pathinfo['filename'] : md5(uniqid() . $originalName);
+        $basename = $filename . '.' . $extension;
+        $filePath = $dir . DIRECTORY_SEPARATOR . $basename;
 
         if (file_exists($filePath)) {
             throw new Q_Uploader_Exception("File ({$filePath}) already exist");
@@ -72,20 +107,26 @@ class Q_Uploader
             throw new Q_Uploader_Exception("File ({$originalName}) is too large");
         }
 
-        $pathinfo = pathinfo($originalName);
-        //$originalFileName = $pathinfo['filename'];
-        $ext = strtolower($pathinfo['extension']);
-
-        if (!empty($this->_allowedExtensions) && !in_array($ext, $this->_allowedExtensions)) {
+        if (!empty($this->_allowedExtensions) && !in_array($extension, $this->_allowedExtensions)) {
             throw new Q_Uploader_Exception(sprintf("File has an invalid extension, it should be one of (%s)",
                                                    implode(', ', $this->_allowedExtensions)));
         }
 
-        return $this->_file->save($filePath);
+        if ($this->_file->save($filePath)) {
+            return array(
+                'basename' => $basename,
+                'filename' => $filename,
+                'extension' => $extension,
+                'size' => $size
+            );
+        }
+
+        return array();
     }
 
     /**
      * @throws Q_Uploader_Exception
+     * @param string $dir
      */
     protected function prepareDir($dir)
     {
@@ -116,6 +157,10 @@ class Q_Uploader
         }
     }
 
+    /**
+     * @param string $string
+     * @return integer
+     */
     protected function toBytes($string)
     {
         $val = (integer) $string;
