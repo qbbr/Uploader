@@ -27,9 +27,13 @@ class Q_Uploader_Method_FileForm extends Q_Uploader_Method_Abstract
         }
     }
 
-    public function save($path)
+    public function save($path, $n)
     {
-        if (!move_uploaded_file($_FILES[$this->_name]['tmp_name'], $path)) {
+        if (!is_array($_FILES[$this->_name]['tmp_name'])) {
+            $_FILES[$this->_name]['tmp_name'] = array($_FILES[$this->_name]['tmp_name']);
+        }
+
+        if (!move_uploaded_file($_FILES[$this->_name]['tmp_name'][$n], $path)) {
             throw new Q_Uploader_Method_Exception("Could not save file to ({$path})");
         }
 

@@ -26,5 +26,5 @@ abstract class Q_Uploader_Method_Abstract
     /**
      * @param string $path
      */
-    abstract public function save($path);
+    abstract public function save($path, $n);
 }

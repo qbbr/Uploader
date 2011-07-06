@@ -27,7 +27,7 @@ class Q_Uploader_Method_Xhr extends Q_Uploader_Method_Abstract
         }
     }
 
-    public function save($path)
+    public function save($path, $n = null)
     {
         $input = fopen('php://input', 'r');
 

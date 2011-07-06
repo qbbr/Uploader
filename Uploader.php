@@ -16,6 +16,15 @@ class Q_Uploader
     protected $_allowedExtensions;
     protected $_sizeLimit = 1048576; // 1M
     protected $_originalFileName = false;
+    protected $_uploadDir;
+    protected $_isArray = false;
+
+    protected $_errors = array(
+        'File (%s) already exist',
+        'File (%s) is empty',
+        'File (%s) is too large',
+        'File has an invalid extension, it should be one of (%s)'
+    );
 
     /**
      * @throws Q_Uploader_Exception
@@ -27,6 +36,7 @@ class Q_Uploader
             $this->_file = new Q_Uploader_Method_Xhr($name);
         } elseif (isset($_FILES[$name])) {
             $this->_file = new Q_Uploader_Method_FileForm($name);
+            $this->_isArray = is_array($_FILES[$name]['name']);
         } else {
             throw new Q_Uploader_Exception('Could not find files for upload');
         }
@@ -61,7 +71,22 @@ class Q_Uploader
     }
 
     /**
-     * Sve original filename, not rename
+     * Set upload directory
+     *
+     * @param string $dir
+     * @return Q_Uploader
+     */
+    public function setUploadDir($dir)
+    {
+        $this->prepareDir($dir);
+
+        $this->_uploadDir = $dir;
+
+        return $this;
+    }
+
+    /**
+     * Save original filename, not rename
      *
      * @param boolean $originalFileName
      * @return Q_Uploader
@@ -74,54 +99,84 @@ class Q_Uploader
     }
 
     /**
-     * Save file to dir
+     * Upload file to server
      *
-     * @throws Q_Uploader_Exception
-     * @param string $dir
-     * @return boolean
+     * @return array
      */
-    public function saveTo($dir)
+    public function upload()
     {
-        $this->prepareDir($dir);
+        $originalNames = $this->_file->getName();
+        if (false === $this->_isArray) $originalNames = array($originalNames);
 
-        $originalName = $this->_file->getName();
+        $sizes = $this->_file->getSize();
+        if (false === $this->_isArray) $sizes = array($sizes);
+
+        $count = count($originalNames);
+
+        $return = array();
+
+        for ($i = 0; $i < $count; $i++) {
+            $originalName = $originalNames[$i];
+
+            if (empty($originalName)) continue;
+
+            $size = $sizes[$i];
+
+            $info = $this->uploadFile($originalName, $size, $i);
+
+            if (false === $this->_isArray) return $info;
+
+            $return []= $info;
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param string $originalName
+     * @param integer $size
+     * @param integer $i
+     * @return array
+     */
+    protected function uploadFile($originalName, $size, $i)
+    {
         $pathinfo = pathinfo($originalName);
 
         $extension = strtolower($pathinfo['extension']);
 
         $filename = (true === $this->_originalFileName) ? $pathinfo['filename'] : md5(uniqid() . $originalName);
         $basename = $filename . '.' . $extension;
-        $filePath = $dir . DIRECTORY_SEPARATOR . $basename;
+        $filePath = $this->_uploadDir . DIRECTORY_SEPARATOR . $basename;
+
+        $errors = array();
 
         if (file_exists($filePath)) {
-            throw new Q_Uploader_Exception("File ({$filePath}) already exist");
+            $errors []= sprintf($this->_errors[0], $filePath);
         }
 
-        $size = $this->_file->getSize();
-
         if (0 === $size) {
-            throw new Q_Uploader_Exception("File ({$originalName}) is empty");
+            $errors []= sprintf($this->_errors[1], $originalName);
         }
 
         if ($size > $this->_sizeLimit) {
-            throw new Q_Uploader_Exception("File ({$originalName}) is too large");
+            $errors []= sprintf($this->_errors[2], $originalName);
         }
 
         if (!empty($this->_allowedExtensions) && !in_array($extension, $this->_allowedExtensions)) {
-            throw new Q_Uploader_Exception(sprintf("File has an invalid extension, it should be one of (%s)",
-                                                   implode(', ', $this->_allowedExtensions)));
+            $errors []= sprintf($this->_errors[3], implode(', ', $this->_allowedExtensions));
         }
 
-        if ($this->_file->save($filePath)) {
-            return array(
-                'basename' => $basename,
-                'filename' => $filename,
-                'extension' => $extension,
-                'size' => $size
-            );
+        if (empty($errors)) {
+            $this->_file->save($filePath, $i);
         }
 
-        return array();
+        return array(
+            'basename' => $basename,
+            'filename' => $filename,
+            'extension' => $extension,
+            'size' => $size,
+            'errors' => $errors
+        );
     }
 
     /**
