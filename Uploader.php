@@ -16,6 +16,7 @@ class Q_Uploader
     protected $_allowedExtensions;
     protected $_sizeLimit = 1048576; // 1M
     protected $_originalFileName = false;
+    protected $_fileName;
     protected $_uploadDir;
     protected $_isArray = false;
 
@@ -99,6 +100,19 @@ class Q_Uploader
     }
 
     /**
+     * Set file name
+     *
+     * @param string $fileName
+     * @return Q_Uploader
+     */
+    public function setFileName($fileName)
+    {
+        $this->_fileName = $fileName;
+
+        return $this;
+    }
+
+    /**
      * Upload file to server
      *
      * @return array
@@ -144,7 +158,12 @@ class Q_Uploader
 
         $extension = strtolower($pathinfo['extension']);
 
-        $filename = (true === $this->_originalFileName) ? $pathinfo['filename'] : md5(uniqid() . $originalName);
+        //$filename = (true === $this->_originalFileName) ? $pathinfo['filename'] : md5(uniqid() . $originalName);
+
+        $filename = (null === $this->_fileName)
+                  ? (true === $this->_originalFileName) ? $pathinfo['filename'] : md5(uniqid() . $originalName)
+                  : $this->_fileName . '_' . $i;
+
         $basename = $filename . '.' . $extension;
         $filePath = $this->_uploadDir . DIRECTORY_SEPARATOR . $basename;
 
