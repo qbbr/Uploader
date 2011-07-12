@@ -186,7 +186,7 @@ class Q_Uploader
     protected function prepareDir($dir)
     {
         if (!is_dir($dir)) {
-            if (!mkdir($dir, 0777)) {
+            if (!mkdir($dir, 0777, true)) {
                 throw new Q_Uploader_Exception("Dir ({$dir}) not found");
             }
         }
