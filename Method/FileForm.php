@@ -27,7 +27,7 @@ class Q_Uploader_Method_FileForm extends Q_Uploader_Method_Abstract
         }
     }
 
-    public function save($path, $n)
+    public function save($path, $n = 1)
     {
         if (!is_array($_FILES[$this->_name]['tmp_name'])) {
             $_FILES[$this->_name]['tmp_name'] = array($_FILES[$this->_name]['tmp_name']);
