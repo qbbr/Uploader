@@ -129,7 +129,19 @@ class Q_Uploader
 
         $return = array();
 
-        for ($i = 0; $i < $count; $i++) {
+        foreach ($originalNames as $i => $originalName) {
+            if (empty($originalName)) continue;
+
+            $size = $sizes[$i];
+
+            $info = $this->uploadFile($originalName, $size, $i);
+
+            if (false === $this->_isArray) return $info;
+
+            $return []= $info;
+        }
+
+        /*for ($i = 0; $i < $count; $i++) {
             $originalName = $originalNames[$i];
 
             if (empty($originalName)) continue;
@@ -141,7 +153,7 @@ class Q_Uploader
             if (false === $this->_isArray) return $info;
 
             $return []= $info;
-        }
+        }*/
 
         return $return;
     }
