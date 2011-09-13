@@ -31,6 +31,8 @@ Single file upload
 
 **result:**
 
+*[image] key is optional, only for image files.*
+
 ```php
 Array
 (
@@ -40,6 +42,13 @@ Array
     [size] => 381137
     [errors] => Array
         (
+        )
+    [image] => Array
+        (
+            [width] => 200
+            [height] => 253
+            [type] => 2
+            [mime] => image/jpeg
         )
 
 )

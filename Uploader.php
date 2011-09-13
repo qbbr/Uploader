@@ -27,6 +27,8 @@ class Q_Uploader
         'File has an invalid extension, it should be one of (%s)'
     );
 
+    protected $_imageExtensions = array('jpg', 'jpeg', 'png', 'gif', 'bmp');
+
     /**
      * @throws Q_Uploader_Exception
      * @param string $name
@@ -141,20 +143,6 @@ class Q_Uploader
             $return []= $info;
         }
 
-        /*for ($i = 0; $i < $count; $i++) {
-            $originalName = $originalNames[$i];
-
-            if (empty($originalName)) continue;
-
-            $size = $sizes[$i];
-
-            $info = $this->uploadFile($originalName, $size, $i);
-
-            if (false === $this->_isArray) return $info;
-
-            $return []= $info;
-        }*/
-
         return $return;
     }
 
@@ -201,13 +189,26 @@ class Q_Uploader
             $this->_file->save($filePath, $i);
         }
 
-        return array(
+        $info = array(
             'basename' => $basename,
             'filename' => $filename,
             'extension' => $extension,
             'size' => $size,
             'errors' => $errors
         );
+
+        if (in_array($extension, $this->_imageExtensions)) {
+            $imageInfo = getimagesize($filePath);
+
+            $info['image'] = array(
+                'width' => $imageInfo[0],
+                'height' => $imageInfo[1],
+                'type' => $imageInfo[2],
+                'mime' => $imageInfo['mime']
+            );
+        }
+
+        return $info;
     }
 
     /**
